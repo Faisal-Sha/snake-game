@@ -93,6 +93,11 @@ def move_snake():
         snake.insert(0, new_head)  # Add new head
         snake.pop()  # Remove the tail (last segment)
 
+    # Check for collision with snake's own body (excluding the head)
+    if new_head in snake[1:]:
+        game_over()
+        return False  # Stop the game
+
     return True
 
 # Function to handle user input for snake direction
@@ -156,7 +161,7 @@ def main():
     # Game loop
     while True:
         handle_input()  # Handle user input
-        if not move_snake():  # Move the snake, if it collides with the wall, end the game
+        if not move_snake():  # Move the snake, if it collides with the wall or itself, end the game
             continue  # Skip the drawing if game over
 
         screen.fill(BACKGROUND_COLOR)  # Fill the screen with background color
