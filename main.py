@@ -34,6 +34,7 @@ DIRECTIONS = {
 # Snake initial position and length
 snake = [(5, 5), (4, 5), (3, 5), (2, 5)]  # Snake starts with length 4 at (5, 5)
 snake_direction = 'RIGHT'  # Snake initially moves to the right
+score = 0
 
 # Function to draw the grid
 def draw_grid():
@@ -43,7 +44,7 @@ def draw_grid():
             pygame.draw.rect(screen, GRID_COLOR, rect, 1)
 
 # Function to draw the score on the screen
-def draw_score(score):
+def draw_score():
     score_text = font.render(f"Score: {score}", True, TEXT_COLOR)
     screen.blit(score_text, (10, 10))
 
@@ -59,15 +60,22 @@ def draw_snake():
 
 # Function to move the snake
 def move_snake():
-    global snake_direction
+    global score
     head_x, head_y = snake[0]
     direction = DIRECTIONS[snake_direction]
     new_head = (head_x + direction[0], head_y + direction[1])
+
+    # Check for collision with the wall
+    if new_head[0] < 0 or new_head[0] >= GRID_SIZE or new_head[1] < 0 or new_head[1] >= GRID_SIZE:
+        game_over()
+        return False  # Stop the game
 
     # Add new head to the snake
     snake.insert(0, new_head)
     # Remove the tail (last segment)
     snake.pop()
+
+    return True
 
 # Function to handle user input for snake direction
 def handle_input():
@@ -86,20 +94,56 @@ def handle_input():
             elif event.key == pygame.K_RIGHT and snake_direction != 'LEFT':
                 snake_direction = 'RIGHT'
 
+# Function to reset the game state
+def reset_game():
+    global snake, snake_direction, score
+    snake = [(5, 5), (4, 5), (3, 5), (2, 5)]  # Reset snake to initial position and length
+    snake_direction = 'RIGHT'  # Reset direction to right
+    score = 0  # Reset score
+
+# Function to display the game over screen and ask for a new game
+def game_over():
+    global score
+    game_over_text = font.render(f"Game Over! Final Score: {score}", True, TEXT_COLOR)
+    new_game_text = font.render("Press 'R' to Restart or 'Q' to Quit", True, TEXT_COLOR)
+
+    screen.fill(BACKGROUND_COLOR)  # Fill the screen with background color
+    screen.blit(game_over_text, (WIDTH // 4, HEIGHT // 3))
+    screen.blit(new_game_text, (WIDTH // 4, HEIGHT // 2))
+
+    pygame.display.update()
+
+    # Wait for user input to either restart or quit
+    waiting_for_input = True
+    while waiting_for_input:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r:  # Restart the game
+                    reset_game()
+                    waiting_for_input = False
+                elif event.key == pygame.K_q:  # Quit the game
+                    pygame.quit()
+                    sys.exit()
+
 # Main function to run the game
 def main():
+    global score
+
     clock = pygame.time.Clock()
-    score = 0
 
     # Game loop
     while True:
         handle_input()  # Handle user input
-        move_snake()  # Move the snake
+        if not move_snake():  # Move the snake, if it collides with the wall, end the game
+            continue  # Skip the drawing if game over
 
         screen.fill(BACKGROUND_COLOR)  # Fill the screen with background color
         draw_grid()  # Draw the grid
         draw_snake()  # Draw the snake
-        draw_score(score)  # Draw the score
+        draw_score()  # Draw the score
 
         pygame.display.update()  # Update the screen
 
