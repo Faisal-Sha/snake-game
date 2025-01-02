@@ -1,5 +1,6 @@
 import pygame
 import sys
+import random
 
 # Initialize pygame
 pygame.init()
@@ -15,6 +16,7 @@ TEXT_COLOR = (255, 255, 255)  # White text for score
 
 SNAKE_COLOR = (0, 255, 0)  # Green color for the snake body
 SNAKE_HEAD_COLOR = (255, 0, 0)  # Red color for the snake head
+FOOD_COLOR = (255, 255, 0)  # Yellow color for the food
 
 # Create the screen
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -35,6 +37,9 @@ DIRECTIONS = {
 snake = [(5, 5), (4, 5), (3, 5), (2, 5)]  # Snake starts with length 4 at (5, 5)
 snake_direction = 'RIGHT'  # Snake initially moves to the right
 score = 0
+
+# Food initial position
+food = (random.randint(0, GRID_SIZE - 1), random.randint(0, GRID_SIZE - 1))
 
 # Function to draw the grid
 def draw_grid():
@@ -58,9 +63,15 @@ def draw_snake():
         else:
             pygame.draw.rect(screen, SNAKE_COLOR, rect)
 
+# Function to draw the food
+def draw_food():
+    x, y = food
+    rect = pygame.Rect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+    pygame.draw.rect(screen, FOOD_COLOR, rect)
+
 # Function to move the snake
 def move_snake():
-    global score
+    global score, food
     head_x, head_y = snake[0]
     direction = DIRECTIONS[snake_direction]
     new_head = (head_x + direction[0], head_y + direction[1])
@@ -70,10 +81,17 @@ def move_snake():
         game_over()
         return False  # Stop the game
 
-    # Add new head to the snake
-    snake.insert(0, new_head)
-    # Remove the tail (last segment)
-    snake.pop()
+    # Check if snake eats the food
+    if new_head == food:
+        # Snake eats the food, increase score and grow snake
+        score += 1
+        snake.insert(0, new_head)  # Add new head (grows snake)
+        # Generate new food
+        food = (random.randint(0, GRID_SIZE - 1), random.randint(0, GRID_SIZE - 1))
+    else:
+        # No food eaten, move snake normally
+        snake.insert(0, new_head)  # Add new head
+        snake.pop()  # Remove the tail (last segment)
 
     return True
 
@@ -96,10 +114,11 @@ def handle_input():
 
 # Function to reset the game state
 def reset_game():
-    global snake, snake_direction, score
+    global snake, snake_direction, score, food
     snake = [(5, 5), (4, 5), (3, 5), (2, 5)]  # Reset snake to initial position and length
     snake_direction = 'RIGHT'  # Reset direction to right
     score = 0  # Reset score
+    food = (random.randint(0, GRID_SIZE - 1), random.randint(0, GRID_SIZE - 1))  # Reset food position
 
 # Function to display the game over screen and ask for a new game
 def game_over():
@@ -143,6 +162,7 @@ def main():
         screen.fill(BACKGROUND_COLOR)  # Fill the screen with background color
         draw_grid()  # Draw the grid
         draw_snake()  # Draw the snake
+        draw_food()  # Draw the food
         draw_score()  # Draw the score
 
         pygame.display.update()  # Update the screen
